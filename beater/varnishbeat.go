@@ -24,6 +24,12 @@ func (vb *Varnishbeat) Config(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) Setup(b *beat.Beat) error {
+	var err error
+	vb.varnish, err = vago.Open("")
+	if err != nil {
+		logp.Err("%s", err)
+		return err
+	}
 	vb.client = b.Publisher.Connect()
 	return nil
 }
@@ -37,12 +43,6 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) exportLog() error {
-	var err error
-	vb.varnish, err = vago.Open("")
-	if err != nil {
-		logp.Err("%s", err)
-		return err
-	}
 	vb.varnish.Log("", vago.RAW, func(vxid uint32, tag, _type, data string) int {
 		switch _type {
 		default:
