@@ -11,6 +11,7 @@ import (
 )
 
 type Varnishbeat struct {
+	alive   bool
 	client  publisher.Client
 	varnish *vago.Varnish
 }
@@ -43,7 +44,11 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) exportLog() error {
+	vb.alive = true
 	vb.varnish.Log("", vago.RAW, func(vxid uint32, tag, _type, data string) int {
+		if vb.alive == false {
+			return -1
+		}
 		switch _type {
 		default:
 			_type = ""
@@ -72,4 +77,5 @@ func (vb *Varnishbeat) Cleanup(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) Stop() {
+	vb.alive = false
 }
