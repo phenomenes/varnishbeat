@@ -1,6 +1,7 @@
 package beater
 
 import (
+	"strings"
 	"time"
 
 	"github.com/elastic/beats/libbeat/beat"
@@ -45,27 +46,44 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 
 func (vb *Varnishbeat) exportLog() error {
 	vb.alive = true
+	tx := make(map[string]interface{})
 	vb.varnish.Log("", vago.RAW, func(vxid uint32, tag, _type, data string) int {
 		if vb.alive == false {
 			return -1
 		}
 		switch _type {
 		default:
-			_type = ""
+			_type = "ping"
 		case "c":
 			_type = "client"
 		case "b":
 			_type = "backend"
 		}
-		event := common.MapStr{
-			"@timestamp": common.Time(time.Now()),
-			"type":       _type,
-			"count":      1,
-			"vxid":       vxid,
-			"tag":        tag,
-			"data":       data,
+		if tag == "ReqHeader" || tag == "BereqHeader" || tag == "BerespHeader" || tag == "ObjHeader" {
+			header := strings.SplitN(data, ":", 2)
+			logp.Info(tag, data)
+			k := header[0]
+			v := header[1]
+			if _, ok := tx[tag]; ok {
+				tx[tag].(map[string]interface{})[k] = v
+			} else {
+				tx[tag] = map[string]interface{}{k: v}
+			}
+		} else {
+			tx[tag] = data
 		}
-		vb.client.PublishEvent(event)
+		if tag == "End" {
+			event := common.MapStr{
+				"@timestamp": common.Time(time.Now()),
+				"count":      1,
+				"type":       _type,
+				"vxid":       vxid,
+				"tx":         tx,
+			}
+			vb.client.PublishEvent(event)
+			tx = nil
+			tx = make(map[string]interface{})
+		}
 		return 0
 	})
 	return nil
