@@ -46,7 +46,7 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 
 func (vb *Varnishbeat) exportLog() error {
 	vb.alive = true
-	tx := make(map[string]interface{})
+	tx := make(common.MapStr)
 	vb.varnish.Log("", vago.RAW, func(vxid uint32, tag, _type, data string) int {
 		if vb.alive == false {
 			return -1
@@ -61,13 +61,12 @@ func (vb *Varnishbeat) exportLog() error {
 		}
 		if tag == "ReqHeader" || tag == "BereqHeader" || tag == "BerespHeader" || tag == "ObjHeader" {
 			header := strings.SplitN(data, ":", 2)
-			logp.Info(tag, data)
 			k := header[0]
 			v := header[1]
 			if _, ok := tx[tag]; ok {
-				tx[tag].(map[string]interface{})[k] = v
+				tx[tag].(common.MapStr)[k] = v
 			} else {
-				tx[tag] = map[string]interface{}{k: v}
+				tx[tag] = common.MapStr{k: v}
 			}
 		} else {
 			tx[tag] = data
@@ -81,8 +80,9 @@ func (vb *Varnishbeat) exportLog() error {
 				"tx":         tx,
 			}
 			vb.client.PublishEvent(event)
+			// destroy and re-create the map
 			tx = nil
-			tx = make(map[string]interface{})
+			tx = make(common.MapStr)
 		}
 		return 0
 	})
