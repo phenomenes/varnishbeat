@@ -1,6 +1,7 @@
 package beater
 
 import (
+	"flag"
 	"strings"
 	"time"
 
@@ -14,11 +15,24 @@ import (
 type Varnishbeat struct {
 	alive   bool
 	client  publisher.Client
+	done    chan uint
+	period  time.Duration
 	varnish *vago.Varnish
+}
+
+var logFlag, statsFlag bool
+
+func init() {
+	flag.BoolVar(&logFlag, "log", false, "Read data from varnishlog")
+	flag.BoolVar(&statsFlag, "stats", false, "Read data from varnishstat")
 }
 
 func New() *Varnishbeat {
 	return &Varnishbeat{}
+}
+
+func (vb *Varnishbeat) HandleFlags(b *beat.Beat) error {
+	return nil
 }
 
 func (vb *Varnishbeat) Config(b *beat.Beat) error {
@@ -37,11 +51,57 @@ func (vb *Varnishbeat) Setup(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
-	err := vb.exportLog()
-	if err != nil {
-		logp.Err("%s", err)
+	var err error
+	if logFlag {
+		err := vb.exportLog()
+		if err != nil {
+			logp.Err("%s", err)
+		}
+	} else {
+		vb.period = 10 * time.Second
+		ticker := time.NewTicker(vb.period)
+		defer ticker.Stop()
+
+		for {
+			//if vb.alive == false {
+			//	return err
+			//	break
+			//}
+			select {
+			case <-vb.done:
+				return nil
+			case <-ticker.C:
+			}
+			timerStart := time.Now()
+			event, err := vb.exportStats()
+			if err != nil {
+				logp.Err("%s", err)
+				break
+			}
+			vb.client.PublishEvent(event)
+			timerEnd := time.Now()
+			duration := timerEnd.Sub(timerStart)
+			if duration.Nanoseconds() > vb.period.Nanoseconds() {
+				logp.Warn("Ignoring tick(s) due to processing taking longer than one period")
+			}
+		}
 	}
 	return err
+}
+
+func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
+	vb.alive = true
+	stats := make(common.MapStr)
+	for k, v := range vb.varnish.Stats() {
+		k1 := strings.Replace(k, ".", "_", -1)
+		stats[k1] = v
+	}
+	event := common.MapStr{
+		"@timestamp": common.Time(time.Now()),
+		"type":       "stats",
+		"stats":      stats,
+	}
+	return event, nil
 }
 
 func (vb *Varnishbeat) exportLog() error {
@@ -60,7 +120,7 @@ func (vb *Varnishbeat) exportLog() error {
 			_type = "backend"
 		}
 		if tag == "ReqHeader" || tag == "BereqHeader" || tag == "BerespHeader" || tag == "ObjHeader" {
-			header := strings.SplitN(data, ":", 2)
+			header := strings.SplitN(data, ": ", 2)
 			k := header[0]
 			v := header[1]
 			if _, ok := tx[tag]; ok {
