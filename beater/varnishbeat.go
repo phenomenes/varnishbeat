@@ -51,6 +51,7 @@ func (vb *Varnishbeat) Setup(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
+	vb.alive = true
 	var err error
 	if logFlag {
 		err := vb.exportLog()
@@ -62,11 +63,7 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 		ticker := time.NewTicker(vb.period)
 		defer ticker.Stop()
 
-		for {
-			//if vb.alive == false {
-			//	return err
-			//	break
-			//}
+		for vb.alive {
 			select {
 			case <-vb.done:
 				return nil
@@ -90,7 +87,6 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
-	vb.alive = true
 	stats := make(common.MapStr)
 	for k, v := range vb.varnish.Stats() {
 		k1 := strings.Replace(k, ".", "_", -1)
@@ -105,7 +101,6 @@ func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
 }
 
 func (vb *Varnishbeat) exportLog() error {
-	vb.alive = true
 	tx := make(common.MapStr)
 	vb.varnish.Log("", vago.RAW, func(vxid uint32, tag, _type, data string) int {
 		if vb.alive == false {
