@@ -115,7 +115,7 @@ func (vb *Varnishbeat) exportLog() error {
 			_type = "ping"
 		}
 		switch tag {
-		case "ReqHeader", "BereqHeader", "BerespHeader", "ObjHeader":
+		case "BereqHeader", "BerespHeader", "ObjHeader", "ReqHeader", "RespHeader":
 			header := strings.SplitN(data, ": ", 2)
 			k := header[0]
 			v := header[1]
