@@ -107,14 +107,15 @@ func (vb *Varnishbeat) exportLog() error {
 			return -1
 		}
 		switch _type {
-		default:
-			_type = "ping"
 		case "c":
 			_type = "client"
 		case "b":
 			_type = "backend"
+		default:
+			_type = "ping"
 		}
-		if tag == "ReqHeader" || tag == "BereqHeader" || tag == "BerespHeader" || tag == "ObjHeader" {
+		switch tag {
+		case "ReqHeader", "BereqHeader", "BerespHeader", "ObjHeader":
 			header := strings.SplitN(data, ": ", 2)
 			k := header[0]
 			v := header[1]
@@ -123,10 +124,7 @@ func (vb *Varnishbeat) exportLog() error {
 			} else {
 				tx[tag] = common.MapStr{k: v}
 			}
-		} else {
-			tx[tag] = data
-		}
-		if tag == "End" {
+		case "End":
 			event := common.MapStr{
 				"@timestamp": common.Time(time.Now()),
 				"count":      1,
@@ -138,6 +136,8 @@ func (vb *Varnishbeat) exportLog() error {
 			// destroy and re-create the map
 			tx = nil
 			tx = make(common.MapStr)
+		default:
+			tx[tag] = data
 		}
 		return 0
 	})
