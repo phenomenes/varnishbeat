@@ -102,7 +102,7 @@ func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
 
 func (vb *Varnishbeat) exportLog() error {
 	tx := make(common.MapStr)
-	vb.varnish.Log("", vago.RAW, func(vxid uint32, tag, _type, data string) int {
+	vb.varnish.Log("", vago.REQ, func(vxid uint32, tag, _type, data string) int {
 		if vb.alive == false {
 			return -1
 		}
