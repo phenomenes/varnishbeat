@@ -13,7 +13,6 @@ import (
 )
 
 type Varnishbeat struct {
-	alive   bool
 	client  publisher.Client
 	done    chan uint
 	period  time.Duration
@@ -51,7 +50,6 @@ func (vb *Varnishbeat) Setup(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
-	vb.alive = true
 	var err error
 	if logFlag {
 		err := vb.exportLog()
@@ -63,7 +61,7 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 		ticker := time.NewTicker(vb.period)
 		defer ticker.Stop()
 
-		for vb.alive {
+		for {
 			select {
 			case <-vb.done:
 				return nil
@@ -103,9 +101,6 @@ func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
 func (vb *Varnishbeat) exportLog() error {
 	tx := make(common.MapStr)
 	vb.varnish.Log("", vago.REQ, func(vxid uint32, tag, _type, data string) int {
-		if vb.alive == false {
-			return -1
-		}
 		switch _type {
 		case "c":
 			_type = "client"
@@ -150,5 +145,5 @@ func (vb *Varnishbeat) Cleanup(b *beat.Beat) error {
 }
 
 func (vb *Varnishbeat) Stop() {
-	vb.alive = false
+	vb.varnish.Stop()
 }
