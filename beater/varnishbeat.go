@@ -107,7 +107,7 @@ func (vb *Varnishbeat) exportLog() error {
 		case "b":
 			_type = "backend"
 		default:
-			_type = "ping"
+			return 0
 		}
 		switch tag {
 		case "BereqHeader", "BerespHeader", "ObjHeader", "ReqHeader", "RespHeader":
