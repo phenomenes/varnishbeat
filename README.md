@@ -23,5 +23,5 @@ varnishbeat -log -c varnishlogbeat.yml
 Harvest Varnish stats
 
 ```
-varnishbeat -stat -c varnishstatbeat.yml
+varnishbeat -stats -c varnishstatbeat.yml
 ```
