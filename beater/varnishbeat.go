@@ -9,13 +9,14 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/publisher"
+
 	"github.com/phenomenes/vago"
 )
 
 type Varnishbeat struct {
-	client  publisher.Client
-	done    chan uint
+	done    chan struct{}
 	period  time.Duration
+	client  publisher.Client
 	varnish *vago.Varnish
 }
 
@@ -26,12 +27,11 @@ func init() {
 	flag.BoolVar(&statsFlag, "stats", false, "Read data from varnishstat")
 }
 
+// New creates a beater
 func New() *Varnishbeat {
-	return &Varnishbeat{}
-}
-
-func (vb *Varnishbeat) HandleFlags(b *beat.Beat) error {
-	return nil
+	return &Varnishbeat{
+		done: make(chan struct{}),
+	}
 }
 
 func (vb *Varnishbeat) Config(b *beat.Beat) error {
@@ -42,49 +42,42 @@ func (vb *Varnishbeat) Setup(b *beat.Beat) error {
 	var err error
 	vb.varnish, err = vago.Open("")
 	if err != nil {
-		logp.Err("%s", err)
 		return err
 	}
 	vb.client = b.Publisher.Connect()
-	return nil
+	vb.period = 10 * time.Second
+	return err
 }
 
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
 	var err error
+	logp.Info("varnishbeat is running! Hit CTRL-C to stop it.")
 	if logFlag {
-		err := vb.exportLog()
+		err := vb.harvestLog()
 		if err != nil {
 			logp.Err("%s", err)
 		}
 	} else {
-		vb.period = 10 * time.Second
 		ticker := time.NewTicker(vb.period)
-		defer ticker.Stop()
-
 		for {
 			select {
 			case <-vb.done:
 				return nil
 			case <-ticker.C:
 			}
-			timerStart := time.Now()
-			event, err := vb.exportStats()
+			event, err := vb.harvestStats()
 			if err != nil {
 				logp.Err("%s", err)
 				break
 			}
+			logp.Info("Event sent")
 			vb.client.PublishEvent(event)
-			timerEnd := time.Now()
-			duration := timerEnd.Sub(timerStart)
-			if duration.Nanoseconds() > vb.period.Nanoseconds() {
-				logp.Warn("Ignoring tick(s) due to processing taking longer than one period")
-			}
 		}
 	}
 	return err
 }
 
-func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
+func (vb *Varnishbeat) harvestStats() (common.MapStr, error) {
 	stats := make(common.MapStr)
 	for k, v := range vb.varnish.Stats() {
 		k1 := strings.Replace(k, ".", "_", -1)
@@ -98,7 +91,7 @@ func (vb *Varnishbeat) exportStats() (common.MapStr, error) {
 	return event, nil
 }
 
-func (vb *Varnishbeat) exportLog() error {
+func (vb *Varnishbeat) harvestLog() error {
 	tx := make(common.MapStr)
 	vb.varnish.Log("", vago.REQ, func(vxid uint32, tag, _type, data string) int {
 		switch _type {
@@ -146,4 +139,5 @@ func (vb *Varnishbeat) Cleanup(b *beat.Beat) error {
 
 func (vb *Varnishbeat) Stop() {
 	vb.varnish.Stop()
+	close(vb.done)
 }

@@ -1,0 +1,204 @@
+{
+    "mappings": {
+        "_default_": {
+            "_all": {
+                "enabled": true,
+                "norms": {
+                    "enabled": false
+                }
+            },
+            "dynamic_templates": [
+                {
+                    "template1": {
+                        "mapping": {
+                            "doc_values": true,
+                            "ignore_above": 1024,
+                            "index": "not_analyzed",
+                            "type": "{dynamic_type}"
+                        },
+                        "match": "*"
+                    }
+                }
+            ],
+            "properties": {
+                "@timestamp": {
+                    "type": "date"
+                },
+                "tx": {
+                    "properties": {
+                        "Begin": {
+                            "type": "string"
+                        },
+                        "BereqMethod": {
+                            "type": "string"
+                        },
+                        "BereqProtocol": {
+                            "type": "string"
+                        },
+                        "BereqURL": {
+                            "type": "string"
+                        },
+                        "BerespHeader": {
+                            "properties": {
+                                "Connection": {
+                                    "type": "string"
+                                },
+                                "Content-Encoding": {
+                                    "type": "string"
+                                },
+                                "Content-Type": {
+                                    "type": "string"
+                                },
+                                "Date": {
+                                    "type": "string"
+                                },
+                                "Last-Modified": {
+                                    "type": "string"
+                                },
+                                "Server": {
+                                    "type": "string"
+                                },
+                                "Transfer-Encoding": {
+                                    "type": "string"
+                                },
+                                "Vary": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "BerespProtocol": {
+                            "type": "string"
+                        },
+                        "BerespReason": {
+                            "type": "string"
+                        },
+                        "BerespStatus": {
+                            "type": "string"
+                        },
+                        "CLI": {
+                            "type": "string"
+                        },
+                        "Debug": {
+                            "type": "string"
+                        },
+                        "ExpKill": {
+                            "type": "string"
+                        },
+                        "Fetch_Body": {
+                            "type": "string"
+                        },
+                        "Gzip": {
+                            "type": "string"
+                        },
+                        "Hit": {
+                            "type": "string"
+                        },
+                        "Length": {
+                            "type": "string"
+                        },
+                        "Link": {
+                            "type": "string"
+                        },
+                        "ObjHeader": {
+                            "properties": {
+                                "Content-Encoding": {
+                                    "type": "string"
+                                },
+                                "Content-Type": {
+                                    "type": "string"
+                                },
+                                "Date": {
+                                    "type": "string"
+                                },
+                                "Last-Modified": {
+                                    "type": "string"
+                                },
+                                "Server": {
+                                    "type": "string"
+                                },
+                                "Vary": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "ObjProtocol": {
+                            "type": "string"
+                        },
+                        "ObjReason": {
+                            "type": "string"
+                        },
+                        "ObjStatus": {
+                            "type": "string"
+                        },
+                        "ReqAcct": {
+                            "type": "string"
+                        },
+                        "ReqHeader": {
+                            "properties": {
+                                "Accept": {
+                                    "type": "string"
+                                },
+                                "Accept-Encoding": {
+                                    "type": "string"
+                                },
+                                "Accept-Language": {
+                                    "type": "string"
+                                },
+                                "Cache-Control": {
+                                    "type": "string"
+                                },
+                                "Connection": {
+                                    "type": "string"
+                                },
+                                "Host": {
+                                    "type": "string"
+                                },
+                                "Upgrade-Insecure-Requests": {
+                                    "type": "string"
+                                },
+                                "User-Agent": {
+                                    "type": "string"
+                                },
+                                "X-Forwarded-For": {
+                                    "type": "string"
+                                },
+                                "X-Varnish": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "SessOpen": {
+                            "type": "string"
+                        },
+                        "Storage": {
+                            "type": "string"
+                        },
+                        "TTL": {
+                            "type": "string"
+                        },
+                        "Timestamp": {
+                            "type": "string"
+                        },
+                        "VCL_call": {
+                            "type": "string"
+                        },
+                        "VCL_return": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "vxid": {
+                    "type": "long"
+                }
+            }
+        }
+    },
+    "order": 0,
+    "settings": {
+        "index.refresh_interval": "5s"
+    },
+    "template": "varnishlogbeat-*"
+}

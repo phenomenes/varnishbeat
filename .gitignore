@@ -1,2 +1,9 @@
 logs
 dev.yml
+/.idea
+/build
+
+.DS_Store
+/varnishbeat
+/varnishbeat.test
+*.pyc

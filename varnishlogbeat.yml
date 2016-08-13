@@ -1,0 +1,12 @@
+##################### Varnishbeat Configuration Example #######################
+
+output:
+  elasticsearch:
+    hosts: ["localhost:9200"]
+    template.name: "varnishlogbeat"
+    template.path: "varnishlogbeat.template.json"
+    template.overwrite: false
+    index: "varnishlogbeat"
+
+logging:
+    level: "debug"
