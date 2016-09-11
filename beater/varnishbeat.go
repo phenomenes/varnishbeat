@@ -17,7 +17,7 @@ import (
 
 type Varnishbeat struct {
 	done    chan struct{}
-	period  time.Duration
+	config  config.Config
 	client  publisher.Client
 	varnish *vago.Varnish
 }
@@ -36,7 +36,8 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		return nil, fmt.Errorf("Error reading config file: %v", err)
 	}
 	vb := &Varnishbeat{
-		done: make(chan struct{}),
+		done:   make(chan struct{}),
+		config: config,
 	}
 	return vb, nil
 }
@@ -50,7 +51,6 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 	}
 
 	vb.client = b.Publisher.Connect()
-	vb.period = 10 * time.Second
 
 	logp.Info("varnishbeat is running! Hit CTRL-C to stop it.")
 	if logFlag {
@@ -60,7 +60,7 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 		}
 
 	} else {
-		ticker := time.NewTicker(vb.period)
+		ticker := time.NewTicker(vb.config.Period)
 		for {
 			select {
 			case <-vb.done:
