@@ -3,10 +3,12 @@
 
 package config
 
+import "time"
+
 type Config struct {
-	Varnishbeat VarnishbeatConfig
+	Period time.Duration `config:"period"`
 }
 
-type VarnishbeatConfig struct {
-	Period string `config:"period"`
+var DefaultConfig = Config{
+	Period: 1 * time.Second,
 }

@@ -2,6 +2,7 @@ package beater
 
 import (
 	"flag"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/elastic/beats/libbeat/publisher"
 
 	"github.com/phenomenes/vago"
+	"github.com/phenomenes/varnishbeat/config"
 )
 
 type Varnishbeat struct {
@@ -28,35 +30,35 @@ func init() {
 }
 
 // New creates a beater
-func New() *Varnishbeat {
-	return &Varnishbeat{
+func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
+	config := config.DefaultConfig
+	if err := cfg.Unpack(&config); err != nil {
+		return nil, fmt.Errorf("Error reading config file: %v", err)
+	}
+	vb := &Varnishbeat{
 		done: make(chan struct{}),
 	}
-}
-
-func (vb *Varnishbeat) Config(b *beat.Beat) error {
-	return nil
-}
-
-func (vb *Varnishbeat) Setup(b *beat.Beat) error {
-	var err error
-	vb.varnish, err = vago.Open("")
-	if err != nil {
-		return err
-	}
-	vb.client = b.Publisher.Connect()
-	vb.period = 10 * time.Second
-	return err
+	return vb, nil
 }
 
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
 	var err error
+
+	vb.varnish, err = vago.Open("")
+	if err != nil {
+		return err
+	}
+
+	vb.client = b.Publisher.Connect()
+	vb.period = 10 * time.Second
+
 	logp.Info("varnishbeat is running! Hit CTRL-C to stop it.")
 	if logFlag {
 		err := vb.harvestLog()
 		if err != nil {
 			logp.Err("%s", err)
 		}
+
 	} else {
 		ticker := time.NewTicker(vb.period)
 		for {
@@ -132,12 +134,8 @@ func (vb *Varnishbeat) harvestLog() error {
 	return nil
 }
 
-func (vb *Varnishbeat) Cleanup(b *beat.Beat) error {
-	vb.varnish.Close()
-	return nil
-}
-
 func (vb *Varnishbeat) Stop() {
 	vb.varnish.Stop()
+	vb.varnish.Close()
 	close(vb.done)
 }
