@@ -3,9 +3,7 @@
 output:
   elasticsearch:
     hosts: ["localhost:9200"]
-    template.name: "varnishstatbeat"
-    template.path: "varnishstatbeat.template.json"
-    template.overwrite: false
+    template.enabled: false
     index: "varnishstatbeat"
 
 logging:
