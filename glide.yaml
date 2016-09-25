@@ -1,0 +1,10 @@
+package: github.com/phenomenes/varnishbeat
+import:
+- package: github.com/elastic/beats
+  version: 5.0.0-alpha5
+  subpackages:
+  - libbeat/beat
+  - libbeat/common
+  - libbeat/logp
+  - libbeat/publisher
+- package: github.com/phenomenes/vago
