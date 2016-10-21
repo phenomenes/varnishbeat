@@ -23,10 +23,12 @@ type Varnishbeat struct {
 }
 
 var logFlag, statsFlag bool
+var varnishDirectoryFlag string
 
 func init() {
 	flag.BoolVar(&logFlag, "log", false, "Read data from varnishlog")
 	flag.BoolVar(&statsFlag, "stats", false, "Read data from varnishstat")
+	flag.StringVar(&varnishDirectoryFlag, "directory", "", "Directory including the name if given to where varnish writes vsm and vcls.")
 }
 
 // New creates a beater
@@ -45,7 +47,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
 	var err error
 
-	vb.varnish, err = vago.Open("")
+	vb.varnish, err = vago.Open(varnishDirectoryFlag)
 	if err != nil {
 		return err
 	}
