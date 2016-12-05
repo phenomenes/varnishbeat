@@ -1,7 +1,6 @@
 package beater
 
 import (
-	"flag"
 	"fmt"
 	"strings"
 	"time"
@@ -22,13 +21,6 @@ type Varnishbeat struct {
 	varnish *vago.Varnish
 }
 
-var logFlag, statsFlag bool
-
-func init() {
-	flag.BoolVar(&logFlag, "log", false, "Read data from varnishlog")
-	flag.BoolVar(&statsFlag, "stats", false, "Read data from varnishstat")
-}
-
 // New creates a beater
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	config := config.DefaultConfig
@@ -44,8 +36,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 
 func (vb *Varnishbeat) Run(b *beat.Beat) error {
 	var err error
-
-	vb.varnish, err = vago.Open("")
+	vb.varnish, err = vago.Open(vb.config.Directory)
 	if err != nil {
 		return err
 	}
@@ -53,7 +44,7 @@ func (vb *Varnishbeat) Run(b *beat.Beat) error {
 	vb.client = b.Publisher.Connect()
 
 	logp.Info("varnishbeat is running! Hit CTRL-C to stop it.")
-	if logFlag {
+	if vb.config.Log {
 		err := vb.harvestLog()
 		if err != nil {
 			logp.Err("%s", err)
