@@ -2,7 +2,6 @@
 
 varnishbeat:
   log: true
-  stats: false
 
 output:
   elasticsearch:
