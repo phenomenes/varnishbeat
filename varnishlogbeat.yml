@@ -1,5 +1,9 @@
 ##################### Varnishbeat Configuration Example #######################
 
+varnishbeat:
+  log: true
+  stats: false
+
 output:
   elasticsearch:
     hosts: ["localhost:9200"]

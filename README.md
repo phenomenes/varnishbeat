@@ -4,7 +4,7 @@ Current status: **beta release**
 
 Varnishbeat is an [Elastic Beat](https://github.com/elastic/beats) for
 varnishlog and varnishstat. It uses [vago](https://github.com/phenomenes/vago)
-to read logs and stats from a Varnish Shared Memory file.
+to read logs and stats from Varnish Shared Memory.
 
 ## Requirements
 
@@ -26,14 +26,42 @@ go get github.com/phenomenes/varnishbeat
 
 ## Run Varnishbeat
 
-Harvest Varnish logs
+Currently `varnishbeat` operates in two modes: `stats` or `logs`.
+Each mode needs its own ES index.
+
+You can run `varnishbeat` to collect `stats` and `logs` but you'll need
+to execute the binary with different configuration files. For example:
+
+
+* To collect Varnish logs, add these lines to the configuration:
 
 ```
-varnishbeat -log -c varnishlogbeat.yml
+# varnishlogbeat.yml
+
+varnishbeat:
+  log: true
+
+output:
+  elasticsearch:
+    index: "varnishlogbeat"
 ```
 
-Harvest Varnish stats
+* To collect Varnish stats: 
+ 
+```
+# varnishstatsbeat.yml
+
+varnishbeat:
+  stats: true
+
+output:
+  elasticsearch:
+    index: "varnishstatsbeat"
+```
+
+Run `varnishbeat`
 
 ```
-varnishbeat -stats -c varnishstatbeat.yml
+$ varnishbeat -c varnishlogbeat.yml
+$ varnishbeat -c varnishstatsbeat.yml
 ```
